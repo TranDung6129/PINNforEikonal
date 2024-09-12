@@ -1,0 +1,30 @@
+nx, nz = 121, 121
+xmin, xmax = 0., 6.
+zmin, zmax = 0., 6.
+x = np.linspace(xmin, xmax, nx)
+z = np.linspace(zmin, zmax, nz)
+
+Xr = np.stack(np.meshgrid(x, z, indexing='ij'), axis=-1)
+
+# Manually creat velocity model
+vmax = 5.0
+V = np.full((nx, nz), vmax)
+
+# Define the parameters for the nested square boxes
+box_half_width = 0.5
+
+# Set velocity within the squares
+for i in range(3):
+    for j in range(3):
+        box_center_z = 1. + i * 2.  # Adjust the box centers along z-axis
+        box_center_x = 1. + j * 2.  # Adjust the box centers along x-axis
+
+        # Set velocity within the square box
+        box_mask = np.logical_and.reduce((Xr[..., 1] >= box_center_z - box_half_width,
+                                          Xr[..., 1] <= box_center_z + box_half_width,
+                                          Xr[..., 0] >= box_center_x - box_half_width,
+                                          Xr[..., 0] <= box_center_x + box_half_width))
+        V[box_mask] = 3  # Velocity inside the square box
+
+# 'Interpolator' object will define velocity model and the domain
+Vel = NES.Interpolator(V, x, z)
